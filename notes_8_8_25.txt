@@ -1,0 +1,14 @@
+# Creating REST API using Laravel 
+
+1. Create Project::
+composer create-project laravel/laravel taskAPI "10.*"
+php artisan make:controller PostController.php
+
+Use command for add "vendor" folder:: "composer update"
+
+All RestAPI command test in PostMan also.
+Create, Update, Read, Delete from PostMan and after same from Front-end UI also using Ajax + jQuery
+
+Today's class we're understand CRUD using Ajax+jQuery in Laravel but not file uploading.
+Here also understand server side validation in Ajax CRUD.
+We need to add here clientside validation.

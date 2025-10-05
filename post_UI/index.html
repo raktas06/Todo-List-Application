@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Modernize Post Management</title>
+
+    <!-- Bootstrap 4 CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.js"
+        integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+
+    <!-- Bootstrap 4 JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+
+    <script type="text/javascript">
+        // Function to format MySQL datetime to readable AM/PM format
+        function formatMySQLDate(mysqlDate) {
+            if (!mysqlDate) return 'N/A';
+            
+            const date = new Date(mysqlDate);
+            
+            // Check if the date is valid
+            if (isNaN(date.getTime())) {
+                return 'Invalid Date';
+            }
+            
+            const options = {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            };
+            
+            return date.toLocaleString('en-US', options);
+        }
+        function handleDelete() {
+            var r = confirm("Do You want to Delete This Record ?");
+            if (r) {
+                $.ajax({
+                    url: "http://localhost:3000/api/posts/delete/" + $("#h_post_id").val(),
+                    type: "DELETE",
+                    data: {},
+                    success: function (data, status) {
+                        if (status == "success") {
+                            alert(data.message);
+                            $("#btnLoad,#closeBtn").click();
+                        }
+                    },
+                    error: function (error) {
+                        console.log(error);
+                    }
+                });
+            }
+        }
+        function handleUpdate(event) {
+            event.preventDefault();
+            var dataToUpdate = {
+                editTitle: $("#editTitle").val(),
+                editDesc: $("#editDesc").val()
+            };
+            console.log(dataToUpdate);
+            $.ajax({
+                url: "http://localhost:3000/api/posts/update/" + $("#h_post_id").val(),
+                type: 'PUT',
+                data: dataToUpdate,
+                success: function (data, status) {
+                    if (status == 'success') {
+                        // alert(data.message);
+                        if(data.message=="post_update_success"){
+                            // showAlert("success","✅ One post updated successfully!");
+                            alert("✅ One post updated successfully!");
+                        $("#btnLoad,#closeBtn").click();
+                    }} else {
+                            // showAlert("danger","❌ Unable to update post right now!");
+                            alert("❌ Unable to update post right now!");
+                        }
+                },
+                error: function (error) {
+                    console.log(error);
+                }
+            })
+        }
+        function handleSubmit(event) {
+            event.preventDefault();
+            var dataToSubmit = {
+                title: $("#title").val(),
+                desc: $("#desc").val()
+            };
+            $.ajax({
+                url: "http://localhost:3000/api/posts/add",
+                type: 'POST',
+                data: dataToSubmit,
+                success: function (data, status) {
+                    if (status == 'success') {
+                        if (data.message == "post_insert_success") {
+                            // showAlert("success", "✅ One post added successfully!");
+                            alert("✅ One post added successfully!");
+                            $("#btnLoad").click();
+                            $("#title").val("");
+                            $("#desc").val("");
+                            $("#addPostForm").addClass("d-none"); // hide after submit
+                        } else {
+                            // showAlert("danger", "❌ Unable to add post right now!");
+                            alert("❌ Unable to add post right now!");
+                        }
+                    }
+                },
+                error: function (error) {
+                    console.log(error);
+                    showAlert("danger", "❌ Error while adding post!");
+                }
+            });
+        }
+
+        function show(pid) {
+            $.ajax({
+                url: "http://localhost:3000/api/posts/show/" + pid,
+                type: "GET",
+                success: function (data, status) {
+                    if (status == 'success') {
+                    console.log("DaTa=> ",data);
+                    console.log("StAtUs=> ",status);
+                        // Format the created date
+                        const formattedDate = formatMySQLDate(data.created);
+                        showAlert("info", `<form onsubmit="handleUpdate(event)"><strong>Post Details</strong><br>
+                            <b>ID:</b> <input type="hidden" id="h_post_id" value="${data.post_id}"/><br>
+                            <b>Title:</b> <input type="text" name="editTitle" id="editTitle" value="${data.title}" class="form-control"/><br>
+                            <b>Description:</b><textarea rows="10" name="editDesc" id="editDesc" cols="30" class="form-control">${data.description}</textarea><br>
+                            <b>Created:</b> ${formattedDate}
+                                <button class="btn btn-dark">UPDATE</button> | <button type="button" onclick="handleDelete()" class="btn btn-info">DELETE</button>
+                                </form>
+                            `);
+                    }
+                },
+                error: function (error) {
+                    console.log(error);
+                }
+            });
+        }
+
+        function showAlert(type, message) {
+            $("#alertBox").html(`
+                <div class="alert alert-${type} alert-dismissible fade show shadow-sm animate__animated animate__fadeInDown" role="alert">
+                    ${message}
+                    <button id="closeBtn" type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            `);
+        }
+
+        $(document).ready(function () {
+            $("#btnLoad").click(function () {
+                $("#d1").html(`
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-2">Loading posts...</p>
+                    </div>
+                `);
+
+                $.ajax({
+                    url: "http://localhost:3000/api/posts/all",
+                    type: "GET",
+                    success: function (data, status) {
+                        if (status == "success") {
+                            var strContent = `
+                            <div class="card shadow-sm animate__animated animate__fadeIn">
+                                <div class="card-header bg-dark text-white">📋 All Posts</div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-hover table-bordered mb-0">
+                                            <thead class="thead-dark">
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Title</th>
+                                                    <th>Description</th>
+                                                    <th>Created</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                            `;
+                            for (let post of data) {
+                                // Format the created date for each post
+                                const formattedDate = formatMySQLDate(post.created);
+                                strContent += `
+                                    <tr class="animate__animated animate__fadeInUp">
+                                        <td><input type='radio' name='r1' value="${post.post_id}" onchange="show(this.value)"/></td>
+                                        <td>${post.title}</td>
+                                        <td>${post.description}</td>
+                                        <td>${formattedDate}</td>
+                                    </tr>
+                                `;
+                            }
+                            strContent += `
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>`;
+                            $("#d1").html(strContent);
+                        }
+                    },
+                    error: function (error) {
+                        console.log(error);
+                        $("#d1").html(`<div class="alert alert-danger">Error loading posts. Please try again.</div>`);
+                    }
+                });
+            });
+
+            // Toggle Add Post Form
+            $("#btnAddPost").click(function () {
+                $("#addPostForm")
+                    .toggleClass("d-none")
+                    .addClass("animate__animated animate__fadeInRight");
+            });
+        });
+    </script>
+</head>
+
+<body class="bg-light">
+    <div class="container py-4">
+        <h1 class="text-center mb-4">📢 Modernize Post Management</h1>
+
+        <!-- Alert Box -->
+        <div id="alertBox"></div>
+
+        <div class="text-center mb-4">
+            <button id="btnLoad" class="btn btn-primary btn-lg shadow-sm mr-2">Show All Posts</button>
+            <button id="btnAddPost" class="btn btn-success btn-lg shadow-sm">➕ Add Post</button>
+        </div>
+
+        <div class="row">
+            <!-- Posts Table -->
+            <div class="col-lg-6 mb-4">
+                <div id="d1"></div>
+            </div>
+
+            <!-- Add Post Form (Hidden by default) -->
+            <div class="col-lg-6">
+                <div id="addPostForm" class="card shadow-sm d-none">
+                    <div class="card-header bg-success text-white">➕ Add New Post</div>
+                    <div class="card-body">
+                        <form onsubmit="handleSubmit(event)">
+                            <div class="form-group">
+                                <label for="title">Title</label>
+                                <input type="text" name="title" id="title" required class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label for="desc">Description</label>
+                                <textarea name="desc" id="desc" required class="form-control" rows="5"></textarea>
+                            </div>
+                            <div class="form-group text-right">
+                                <button class="btn btn-success shadow-sm">Submit</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
