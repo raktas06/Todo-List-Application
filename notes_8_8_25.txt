@@ -11,4 +11,4 @@ Create, Update, Read, Delete from PostMan and after same from Front-end UI also 
 
 Today's class we're understand CRUD using Ajax+jQuery in Laravel but not file uploading.
 Here also understand server side validation in Ajax CRUD.
-We need to add here clientside validation.
+We need to add here clientside validation...
